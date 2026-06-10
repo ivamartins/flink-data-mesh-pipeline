@@ -1,6 +1,6 @@
-# Class interaction flow — flink-data-mesh-pipeline
+# Fluxo de interação entre classes — flink-data-mesh-pipeline
 
-Quick visualization of how data flows from Kafka (or local collection) to the enriched output.
+Visualização rápida de como os dados fluem do Kafka (ou collection local) até a saída enriquecida.
 
 ## 1. Bootstrap
 
@@ -13,7 +13,7 @@ DataMeshJob.main("kafka" | default)
               └─> env.execute("Flink Data Mesh Pipeline - ...")
 ```
 
-## 2. Pipeline (`kafka` mode)
+## 2. Pipeline (modo `kafka`)
 
 ```
 KafkaSource (orders.input)         ──> orders: DataStream[String]
@@ -31,13 +31,13 @@ customerParsed.broadcast(customerDescriptor)  ──> BroadcastStream[CustomerDa
         .process(CustomerEnrichmentFunction)  [mesh/CustomerEnrichmentFunction]
               └─> EnrichedOrder(order, customerTier, enrichedAt)
                     └─> EnrichmentLib.toJson()  [mesh/EnrichmentLib]
-                          └─> print()  ──> stdout (or orders.enriched in prod)
+                          └─> print()  ──> stdout (ou orders.enriched em prod)
 ```
 
-**Summary path:**
+**Caminho resumido:**
 `(orders.input + customers.input) → parse → validate → broadcast/connect → process → toJson → output`
 
-## 3. Pipeline (local `collection` mode)
+## 3. Pipeline (modo `collection` local)
 
 ```
 env.fromCollection(orderEvents)        ──> DataStream[String]
@@ -51,35 +51,35 @@ parsedOrders.connect(broadcastCustomers).process(CustomerEnrichmentFunction)
   └─> .print() (stdout)
 ```
 
-## 4. Validation (Scala ↔ Python parity)
+## 4. Validação (parity Scala ↔ Python)
 
 ```
 Scala:                            Python (data_contracts.py):
 EnrichmentLib.parseOrder    ─┐    OrderDataProduct (Pydantic)
 EnrichmentLib.validateOrder  ┼──> amount > 0, currency 3, status enum
-                              │    (same rules, two-language parity)
+                              │    (mesmas regras, two-language parity)
 EnrichmentLib.parseCustomer  ┘    CustomerDataProduct (Pydantic)
-                                   email valid, tier enum
+                                   email válido, tier enum
 ```
 
-## 5. Data types
+## 5. Tipos de dados
 
 ```
-OrderDataProduct        (Scala case class)   ─┐
-CustomerDataProduct     (Scala case class)   ─┴──> EnrichedOrder (Scala case class)
+OrderDataProduct        (case class Scala)    ─┐
+CustomerDataProduct     (case class Scala)    ─┴──> EnrichedOrder (case class Scala)
                                                    └─> JsonProtocols (spray-json) ──> JSON
 ```
 
-## Package map
+## Mapa de pacotes
 
 ```
 com.codesolutions.flink.mesh
 ├── DataMeshJob.scala                    ← main + entry point
 ├── CustomerEnrichmentFunction.scala     ← BroadcastProcessFunction
-├── DataProducts.scala                   ← registry (name, owner, topic, SLA, schema)
+├── DataProducts.scala                   ← registry (nome, owner, topic, SLA, schema)
 ├── OrderDataProduct.scala               ← case class + TopicIn
 ├── CustomerDataProduct.scala            ← case class + TopicIn
-├── EnrichedOrder.scala                  ← case class (result)
+├── EnrichedOrder.scala                  ← case class (resultado)
 ├── EnrichmentLib.scala                  ← parse + validate + toJson
 └── JsonProtocols.scala                  ← spray-json formats
 
@@ -87,6 +87,6 @@ contracts/  (Python)
 └── data_contracts.py                    ← Pydantic models + DATA_PRODUCTS registry
 ```
 
-## Errors
+## Erros
 
-`EnrichmentLib` returns `Either[Err, T]`. In `DataMeshJob`, the `match` extracts `Left(err)` and throws a `RuntimeException` with the message, which makes the Flink job fail with the full stack (dev mode). In production, the ideal approach is to send errors to a side output / dead-letter.
+`EnrichmentLib` retorna `Either[Err, T]`. No `DataMeshJob`, o `match` extrai o `Left(err)` e lança `RuntimeException` com a mensagem, o que faz o job do Flink falhar com a stack completa (modo dev). Em produção, o ideal é enviar para um side output / dead-letter.
