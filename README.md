@@ -4,9 +4,9 @@ Flink + Kafka pipeline implementing a **Data Mesh** architecture with two indepe
 
 ## Why this project?
 
-Built to showcase the **Data Engineer** role requirements:
+Built to showcase a data-engineering-oriented stack:
 
-| JD requirement | Where |
+| Topic | Where |
 |---|---|
 | ETL Data Pipelines | `DataMeshJob` |
 | Python for Data Engineering | `src/main/python/contracts/data_contracts.py` (Pydantic) |
@@ -95,6 +95,6 @@ Every validation rule is enforced on BOTH sides:
 
 ## See also
 
-- `akka-scala-base` (Senior Software Engineer role)
-- `dbt-airflow-data-platform` (Data Engineer role — dbt + Airflow)
-- `scala-akka-aws-microservice` (Senior Software Engineer role — AWS Fargate)
+- `akka-scala-base` (Scala/Akka)
+- `dbt-airflow-data-platform` (dbt + Airflow)
+- `scala-akka-aws-microservice` (AWS Fargate)
