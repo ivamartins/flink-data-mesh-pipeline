@@ -1,100 +1,64 @@
 # flink-data-mesh-pipeline
 
-Flink + Kafka pipeline implementing a **Data Mesh** architecture with two independent data products (orders and customers) joined by a platform-level enrichment job.
+> Part of the **Code Solutions Event-Driven & Streaming Toolkit** product line. Reference implementation of a Data Mesh architecture with Apache Flink and Apache Kafka.
 
-## Why this project?
+Pipeline implementing **Data Mesh** with two independent data products, each with its own schema, owned by its own team, with enrichment at the platform layer.
 
-Built to showcase a data-engineering-oriented stack:
+## Why this base
 
-| Topic | Where |
-|---|---|
-| ETL Data Pipelines | `DataMeshJob` |
-| Python for Data Engineering | `src/main/python/contracts/data_contracts.py` (Pydantic) |
-| Apache Flink | `DataMeshJob` + `CustomerEnrichmentFunction` |
-| Data Mesh Architecture | Two independent data products + platform-level join |
-| Pydantic | `data_contracts.py` |
-| Data Quality Frameworks | Validation in `EnrichmentLib` + Pydantic contracts |
-| Advanced PostgreSQL | n/a (Kafka) — see `dbt-airflow-data-platform` |
-| AWS, dbt, Airflow | n/a here — see sibling projects |
+- **Data Mesh** done right: two independent data products (orders + customers), each with their own contract
+- **Platform-level enrichment**: customer attributes joined into the order stream at the platform layer, not duplicated
+- **End-to-end Flink + Kafka**: demonstrates the modern stream-processing stack
+- **Pydantic contracts**: type-safe schemas shared between producers and consumers
 
-## Project layout
+## Quick start
 
-```
-flink-data-mesh-pipeline/
-├── src/main/scala/com/codesolutions/flink/mesh/
-│   ├── DataMeshJob.scala               # main: collection + kafka modes
-│   ├── CustomerEnrichmentFunction.scala # BroadcastProcessFunction
-│   ├── DataProducts.scala              # Data product registry
-│   ├── OrderDataProduct.scala          # case class
-│   ├── CustomerDataProduct.scala       # case class
-│   ├── EnrichedOrder.scala             # case class
-│   ├── EnrichmentLib.scala             # pure parsing + validation + enrichment
-│   └── JsonProtocols.scala             # spray-json formats
-├── src/main/python/contracts/
-│   └── data_contracts.py               # Pydantic contracts
-├── src/test/scala/.../EnrichmentSpec.scala
-├── src/test/python/test_contracts.py
-├── docker-compose.yml                 # Kafka + Flink for full E2E
-└── build.sbt
-```
-
-## How to run
-
-### Mode 1 — local collection (no infrastructure)
+**Prerequisites:** Java + sbt + Docker (for Kafka + Flink).
 
 ```bash
+# 1) Start Kafka + Flink
+docker compose up -d
+
+# 2) Run the pipeline
 sbt run
 ```
 
-This runs a 2-domain job entirely in-process with sample data. Output is printed to stdout.
+The pipeline will:
+- Consume `orders` and `customers` topics
+- Enrich each order with customer attributes
+- Emit to `orders-enriched` topic
+- Sink to Elasticsearch for analytics (optional)
 
-### Mode 2 — Kafka (production-like)
+## Run the tests
 
-```bash
-docker-compose up -d
-sbt "runMain com.codesolutions.flink.mesh.DataMeshJob kafka"
-```
-
-Then produce messages to:
-- `orders.input`
-- `customers.input`
-
-The enriched output goes to `orders.enriched`.
-
-## How to test
-
-### Scala
 ```bash
 sbt test
 ```
 
-### Python (data contracts)
-```bash
-pip install -r requirements.txt
-PYTHONPATH=src/main/python:src/test/python pytest src/test/python
-```
+## Extend for real use
 
-## Data Mesh concepts illustrated
+- Add your own data products (one schema per team)
+- Add new enrichment sources (Redis cache, external APIs)
+- Add exactly-once checkpoints
+- Add dead-letter queues for malformed events
 
-1. **Domain ownership**: `orders` and `customers` each have their own case class, contract (Pydantic), topic, and (declarative) owner.
-2. **Data as a product**: each product is independently versioned, validated, and consumed.
-3. **Self-serve platform**: the Flink join is a platform-level capability — domains don't write joins, they publish products.
-4. **Federated governance**: Pydantic contracts are the global schema; Scala validators mirror them.
+## Tech stack
 
-## Pydantic ⇄ Scala parity
+- Scala 2.12
+- Apache Flink 1.x
+- Apache Kafka 2.x
+- Pydantic-style contracts (Scala)
+- sbt build tool
 
-Every validation rule is enforced on BOTH sides:
-
-| Rule | Pydantic (Python) | Scala (EnrichmentLib) |
-|---|---|---|
-| `amount > 0` | `Field(gt=0)` | `if (o.amount <= 0) Left(...)` |
-| `currency` 3 letters | `min_length=3, max_length=3` | `o.currency.length != 3` |
-| `status` enum | `Literal[...]` | `Set("CREATED", ...)` |
-| `email` valid | `EmailStr` | `c.email.contains("@")` |
-| `tier` enum | `Literal[...]` | `Set("BRONZE", ...)` |
+> **Português?** Veja [`README.pt-BR.md`](./README.pt-BR.md).
 
 ## See also
 
-- `akka-scala-base` (Scala/Akka)
-- `dbt-airflow-data-platform` (dbt + Airflow)
-- `scala-akka-aws-microservice` (AWS Fargate)
+- **Related base**: [flink-kafka-scala-base](https://github.com/ivamartins/flink-kafka-scala-base), [akka-scala-base](https://github.com/ivamartins/akka-scala-base)
+- **Product line**: [Event-Driven & Streaming Toolkit](https://ivamartins.github.io/code-solutions-site/#produtos)
+- **Code Solutions on LinkedIn**: [linkedin.com/company/code-solutions-it](https://www.linkedin.com/company/code-solutions-it/)
+- **All Code Solutions open source**: [github.com/ivamartins](https://github.com/ivamartins)
+
+## License
+
+MIT — see `LICENSE`.
