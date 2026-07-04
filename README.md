@@ -1,5 +1,8 @@
 # flink-data-mesh-pipeline
 
+[![CI](https://github.com/ivamartins/flink-data-mesh-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/ivamartins/flink-data-mesh-pipeline/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 > Part of the **Code Solutions Event-Driven & Streaming Toolkit** product line. Reference implementation of a Data Mesh architecture with Apache Flink and Apache Kafka.
 
 Pipeline implementing **Data Mesh** with two independent data products, each with its own schema, owned by its own team, with enrichment at the platform layer.
